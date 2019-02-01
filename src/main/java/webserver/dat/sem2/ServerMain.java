@@ -58,8 +58,9 @@ public class ServerMain {
                 }
                 System.out.println( ">>>>>>>>>>>>>>>" );
                 Date today = new Date();
-                String httpResponse = "HTTP/1.1 200 OK\r\n\r\n" + today;
+                String httpResponse = "HTTP/1.1 200 OK\r\n\r\n" + today + "\nMarcus er gay!";
                 socket.getOutputStream().write( httpResponse.getBytes( "UTF-8" ) );
+
                 System.out.println( "<<<<<<<<<<<<<<<<<" );
             }
 
@@ -164,6 +165,7 @@ public class ServerMain {
     private static void picoServer06() throws Exception {
         final ServerSocket server = new ServerSocket( 8080 );
         System.out.println( "Listening for connection on port 8080 ...." );
+        //String root = "pages";
         String root = "pages";
         int count = 0;
         while ( true ) { // keep listening (as is normal for a server)
@@ -180,7 +182,13 @@ public class ServerMain {
                     String res = "";
                     switch ( path ) {
                         case "/addournumbers":
-                            res = addOurNumbers( req );
+                            if(req.getParameter("operator").equalsIgnoreCase("add")){
+                                res = addOurNumbers( req );
+                            }else if(req.getParameter("operator").equalsIgnoreCase("mul")){
+                                res = mulOurNumber(req);
+                            }else if(req.getParameter("operator").equalsIgnoreCase("Sub")) {
+                                res = subOurNumber(req);
+                            }
                             break;
                         default:
                             res = "Unknown path: " + path;
@@ -215,18 +223,50 @@ public class ServerMain {
 
     }
 
+    private static String generateHTML(String file, String a, String b, String c, String opr){
+
+        String res = null;
+        try {
+            res = getResourceFileContents("result.tmpl");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        res = res.replace( "$0", a);
+        res = res.replace( "$1", b);
+        res = res.replace( "$2", c);
+        res = res.replace( "$3", opr);
+        return res;
+    }
+
     private static String addOurNumbers( HttpRequest req ) {
         String first = req.getParameter( "firstnumber" );
         String second = req.getParameter( "secondnumber" );
         int fi = Integer.parseInt( first );
         int si = Integer.parseInt( second );
-        String res = RES;
-        res = res.replace( "$0", first);
-        res = res.replace( "$1", second);
-        res = res.replace( "$2", String.valueOf( fi+si ) );
+        String res = generateHTML("result.tmpl", first, second, String.valueOf(fi+si), "+");
+
         return res;
     }
 
+//    private static String subOurNumber( HttpRequest req) {
+//        String first = req.getParameter("firstnumber");
+//        String second = req.getParameter("secondnumber");
+//
+//
+//        String result = Integer.toString(  Integer.parseInt(first) - Integer.parseInt(second));
+//
+//        return generateHTML("result.tmpl", first, second, result, "-");
+//    }
+
+        private static String subOurNumber(HttpRequest req){
+        String first = req.getParameter("firstnumber");
+        String second = req.getParameter("secondnumber");
+
+        String result = Integer.toString(Integer.parseInt(first) - Integer.parseInt(second));
+
+
+        return generateHTML("result.tmpl", first, second, result, "-");
+    }
     private static String RES = "<!DOCTYPE html>\n"
             + "<html lang=\"da\">\n"
             + "    <head>\n"
@@ -239,5 +279,15 @@ public class ServerMain {
             + "        <a href=\"adding.html\">Læg to andre tal sammen</a>\n"
             + "    </body>\n"
             + "</html>\n";
+    private static String mulOurNumber( HttpRequest req) {
+        String first = req.getParameter("firstnumber");
+        String second = req.getParameter("secondnumber");
+
+
+        String result = Integer.toString(  Integer.parseInt(first) * Integer.parseInt(second));
+
+        return generateHTML("result.tmpl", first, second, result, "*");
+    }
+
 
 }
